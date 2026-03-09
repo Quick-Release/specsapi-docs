@@ -1,6 +1,7 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import starlightOpenAPI, { openAPISidebarGroups } from 'starlight-openapi';
+import starlightLinksValidator from 'starlight-links-validator';
 
 export default defineConfig({
   integrations: [
@@ -12,9 +13,11 @@ export default defineConfig({
           {
             base: 'api', // Your API docs will live at /api/...
             label: 'API Reference', // The label in your sidebar
-            schema: './schema.yaml', // Path to the local file we just copied
+            schema: './schema.yaml',
           },
         ]),
+
+        starlightLinksValidator(),
       ],
       sidebar: [
         {
@@ -23,7 +26,6 @@ export default defineConfig({
             { label: 'Authentication', link: '/guides/example/' },
           ],
         },
-        // 2. Use the spread operator (...) to unpack the generated routes
         ...openAPISidebarGroups,
       ],
     }),
