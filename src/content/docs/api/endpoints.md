@@ -23,3 +23,13 @@ GET /api/v1/users
 ```
 
 ### Response
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Jane Doe",
+    "email": "jane@example.com"
+  }
+]
+```
