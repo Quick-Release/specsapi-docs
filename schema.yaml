@@ -1,0 +1,231 @@
+openapi: 3.0.3
+info:
+  title: SpecsAPI
+  description: |-
+    Edge-native API that returns product specifications as JSON-LD (schema.org ProductModel/Product).
+  version: 1.0.0
+servers:
+  - url: https://api.specsapi.com
+    description: Public API server
+paths:
+  /health:
+    get:
+      summary: Health check
+      tags:
+        - Health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          description: Service degraded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+
+  /v1/specs/{slug}:
+    get:
+      summary: Retrieve product specs by slug (returns JSON-LD)
+      tags:
+        - Specs
+      parameters:
+        - name: slug
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: locale
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [en-US, pt-PT]
+          description: Optional locale. If absent, Accept-Language header is used.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Product specs in JSON-LD (schema.org ProductModel)
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProductJsonLd'
+        '400':
+          description: Invalid request (bad locale, etc.)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized (when API_KEY is set on the server)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /v1/specs:
+    get:
+      summary: Retrieve product specs by GTIN (returns JSON-LD)
+      tags:
+        - Specs
+      parameters:
+        - name: gtin
+          in: query
+          required: true
+          schema:
+            type: string
+          description: GTIN (13 or 14 digits)
+        - name: locale
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [en-US, pt-PT]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Product specs in JSON-LD (schema.org ProductModel)
+          content:
+            application/ld+json:
+              schema:
+                $ref: '#/components/schemas/ProductJsonLd'
+        '400':
+          description: Invalid GTIN or locale
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized (when API_KEY is set on the server)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: APIKey
+
+  schemas:
+    HealthResponse:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+        ok:
+          type: boolean
+      required: [status, ok]
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+          required: [code, message]
+      required: [error]
+
+    ProductSpecsAttribute:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+        unitCode:
+          type: string
+        unitText:
+          type: string
+      required: [name, value]
+
+    Brand:
+      type: object
+      properties:
+        "@type":
+          type: string
+          example: Brand
+        name:
+          type: string
+      required: ["@type", name]
+
+    PropertyValue:
+      type: object
+      properties:
+        "@type":
+          type: string
+          example: PropertyValue
+        name:
+          type: string
+        value:
+          type: string
+        unitCode:
+          type: string
+        unitText:
+          type: string
+      required: ["@type", name, value]
+
+    ProductJsonLd:
+      type: object
+      properties:
+        "@context":
+          type: string
+          example: https://schema.org
+        "@type":
+          type: string
+          example: ProductModel
+        name:
+          type: string
+        sku:
+          type: string
+        category:
+          type: string
+        brand:
+          $ref: '#/components/schemas/Brand'
+        gtin13:
+          type: string
+        gtin14:
+          type: string
+        mpn:
+          type: string
+        additionalProperty:
+          type: array
+          items:
+            $ref: '#/components/schemas/PropertyValue'
+        inLanguage:
+          type: string
+      required: ["@context", "@type", name, sku, brand, additionalProperty, inLanguage]
+
+tags:
+  - name: Health
+    description: Health and status endpoints
+  - name: Specs
+    description: Product specification endpoints (JSON-LD responses)
+
+x-info:
+  generatedBy: specsapi.com openapi generator
+  contentTypeNote: application/ld+json responses use UTF-8 charset (application/ld+json; charset=utf-8)

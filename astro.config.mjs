@@ -23,8 +23,8 @@ export default defineConfig({
             { label: 'Authentication', link: '/guides/example/' },
           ],
         },
-        // 2. Automatically inject the generated API routes into the sidebar
-        openAPISidebarGroups,
+        // 2. Use the spread operator (...) to unpack the generated routes
+        ...openAPISidebarGroups,
       ],
     }),
   ],
