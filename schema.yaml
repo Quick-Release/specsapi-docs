@@ -6,7 +6,7 @@ info:
   version: 1.0.0
 servers:
   - url: https://api.specsapi.com
-    description: Public API server
+    description: Replace with your deployment URL
 paths:
   /health:
     get:
@@ -119,6 +119,59 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /v1/products:
+    get:
+      summary: List products (paginated)
+      tags:
+        - Specs
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: per_page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: locale
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [en-US, pt-PT]
+          description: Optional locale for product names; falls back to default locale.
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Paginated list of products
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductsListResponse'
+          headers:
+            X-Total-Count:
+              description: Total number of products available
+              schema:
+                type: integer
+            Link:
+              description: Pagination links (rel="first", "prev", "next", "last")
+              schema:
+                type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -219,6 +272,46 @@ components:
         inLanguage:
           type: string
       required: ["@context", "@type", name, sku, brand, additionalProperty, inLanguage]
+
+    ProductListItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        slug:
+          type: string
+        name:
+          type: string
+          nullable: true
+        gtin13:
+          type: string
+          nullable: true
+        gtin14:
+          type: string
+          nullable: true
+        mpn:
+          type: string
+          nullable: true
+        brand:
+          type: string
+      required: [id, slug, brand]
+
+    ProductsListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductListItem'
+        page:
+          type: integer
+        per_page:
+          type: integer
+        total:
+          type: integer
+        hasNext:
+          type: boolean
+      required: [items, page, per_page, total, hasNext]
 
 tags:
   - name: Health
